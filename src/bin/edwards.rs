@@ -1,7 +1,8 @@
 use ed25519_dalek::{
     pkcs8::{self, EncodePrivateKey, EncodePublicKey},
-    Signer, Verifier, SigningKey,
+    Signer, SigningKey, Verifier,
 };
+use hex;
 use rand::rngs::OsRng;
 use std::fmt;
 
@@ -16,7 +17,6 @@ impl fmt::Display for CustomError {
         match self {
             CustomError::DalekPkcs8SpkiError(err) => write!(f, "DalekPkcs8SpkiError: {:?}", err),
             CustomError::DalekPkcs8Error(err) => write!(f, "DalekPkcs8Error: {:?}", err),
-
         }
     }
 }
@@ -24,25 +24,62 @@ impl fmt::Display for CustomError {
 impl std::error::Error for CustomError {}
 
 fn main() -> Result<(), CustomError> {
-    
     // Use a cryptographically secure pseudo random number generator
     let mut rng = OsRng;
 
-    // Generate ED25519 keypair 
+    // Generate ED25519 keypair
     let signing_key = SigningKey::generate(&mut rng);
     let verifying_key = signing_key.verifying_key();
 
+    // Print keypair in hex
+    println!("\n\n========Hex format========");
+    println!(
+        "\nSigning key in hex is: {:?}",
+        hex::encode(signing_key.to_bytes())
+    );
+    println!(
+        "Verifying key in hex is: {:?}",
+        hex::encode(verifying_key.to_bytes())
+    );
+
     // Print keypair in binary DER format
-    println!("\n\nPKCS#8 private key DER is: {:?}\n", signing_key.to_pkcs8_der().map_err(CustomError::DalekPkcs8Error)?.to_bytes());
-    println!("PKCS#8 public key DER is: {:?}\n\n", verifying_key.to_public_key_der().map_err(CustomError::DalekPkcs8SpkiError)?);
+    println!("\n\n========DER format========");
+    println!(
+        "\nPKCS#8 private key DER is: {:?}\n",
+        signing_key
+            .to_pkcs8_der()
+            .map_err(CustomError::DalekPkcs8Error)?
+            .to_bytes()
+    );
+    println!(
+        "PKCS#8 public key DER is: {:?}\n\n",
+        verifying_key
+            .to_public_key_der()
+            .map_err(CustomError::DalekPkcs8SpkiError)?
+    );
 
     // Print keypair in text PEM format
-    println!("PKCS#8 private key PEM is: {:?}\n", signing_key.to_pkcs8_pem(pkcs8::spki::der::pem::LineEnding::CRLF).map_err(CustomError::DalekPkcs8Error)?);
-    println!("PKCS#8 public key PEM is: {:?}\n", verifying_key.to_public_key_pem(pkcs8::spki::der::pem::LineEnding::CRLF).map_err(CustomError::DalekPkcs8SpkiError)?);
+    println!("\n\n========PEM format========");
+    println!(
+        "\nPKCS#8 private key PEM is: {:?}\n",
+        signing_key
+            .to_pkcs8_pem(pkcs8::spki::der::pem::LineEnding::CRLF)
+            .map_err(CustomError::DalekPkcs8Error)?
+    );
+    println!(
+        "PKCS#8 public key PEM is: {:?}\n",
+        verifying_key
+            .to_public_key_pem(pkcs8::spki::der::pem::LineEnding::CRLF)
+            .map_err(CustomError::DalekPkcs8SpkiError)?
+    );
 
     // Sign a message with the signing key
     let message: &[u8] = b"This is a test message for rust dalek";
     let signature = signing_key.sign(message);
+
+    // Print signature
+    println!("\n\n========Signature========");
+    println!("\nSignature is: {}\n", signature.to_string());
 
     // Verify message with the verifying key
     assert!(verifying_key.verify(message, &signature).is_ok());
