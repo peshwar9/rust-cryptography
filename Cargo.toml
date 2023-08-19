@@ -10,3 +10,6 @@ ed25519-dalek = {version = "2.0.0", features = ["rand_core", "pkcs8", "alloc", "
 rand = {version = "0.8", features = ["std_rng"]}
 hex = "0.4.3"
 bip39 = "2.0.0"
+elliptic-curve = {version = "0.13.5", features = ["arithmetic"]}
+num-bigint = "0.4.3"
+num-traits = "0.2.16"
